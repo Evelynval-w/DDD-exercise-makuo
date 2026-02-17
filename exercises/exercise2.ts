@@ -23,16 +23,25 @@ import { logError } from "./logger.js"
 // make them explicit and impossible to bypass.
 // ============================================================================
 
+type Quantity = number & { readonly __brand: unique symbol }
+function createQuantity(n: number): Quantity {
+    if (!Number.isInteger(n)) throw new Error("Quantity must be a whole number")
+    if (n <= 0) throw new Error("Quantity must be positive")
+    if (n > 100) throw new Error("Quantity exceeds maximum per order")
+    return n as Quantity
+}
+
 export function exercise2_PrimitiveQuantity() {
 	type Order = {
 		itemName: string
-		quantity: number // Could be 0, negative, or absurdly high!
+		quantity: Quantity// Could be 0, negative, or absurdly high!
 		pricePerUnit: number
 	}
 
+	try {
 	const order: Order = {
 		itemName: "Pizza",
-		quantity: -3, // Silent bug! Negative quantity
+		quantity: createQuantity(-3), // Silent bug! Negative quantity
 		pricePerUnit: 15,
 	}
 
@@ -47,11 +56,17 @@ export function exercise2_PrimitiveQuantity() {
 		calculatedTotal: total,
 		issue: "Quantity should be a positive integer!",
 	})
+} catch (error) {
+        console.log(`✓ Exercise 2: Correctly rejected - ${(error as Error).message}`)
+    }
+
+
 
 	// Another silent bug - absurd quantity
+	try {
 	const bulkOrder: Order = {
 		itemName: "Coffee",
-		quantity: 50000, // Silent bug! Unrealistic quantity
+		quantity: createQuantity(50000), // Silent bug! Unrealistic quantity
 		pricePerUnit: 3,
 	}
 
@@ -60,4 +75,7 @@ export function exercise2_PrimitiveQuantity() {
 		calculatedTotal: bulkOrder.quantity * bulkOrder.pricePerUnit,
 		issue: "Should we really accept an order for 50,000 coffees?",
 	})
+} catch (error) {
+        console.log(`✓ Exercise 2: Correctly rejected - ${(error as Error).message}`)
+    }
 }
