@@ -23,18 +23,29 @@ import { logError } from "./logger.js"
 // so every price in the system is guaranteed valid by construction.
 // ============================================================================
 
+type Price = number & { readonly __brand: unique symbol }
+function createPrice(amount: number): Price {
+	if (amount < 0) throw new Error(`Price cannot be negative: ${amount}`)
+	if (amount > 10_000) throw new Error(`Price exceeds maximum: ${amount}`)
+	return amount as Price
+
+}
+
 export function exercise1_PrimitivePrice() {
 	// Without domain types, price is just a number
 	type MenuItem = {
 		name: string
-		price: number // Could be negative! Could be a huge number!
+		price: Price // Could be negative! Could be a huge number! ( becomes an brand type)
 		quantity: number
 	}
 
+	const testPrice = -50  // Change this value to test different prices
+
+    try {
 	const orderItem: MenuItem = {
 		name: "Burger",
-		price: -50, // Silent bug! Negative price
-		quantity: 1,
+		price:createPrice(testPrice), // Silent bug! Negative price
+		quantity: 2,
 	}
 
 	// TODO: Replace `number` with a Price branded type.
@@ -43,10 +54,14 @@ export function exercise1_PrimitivePrice() {
 	// Instead, force callers through createPrice(-50), which throws at runtime.
 
 	const total = orderItem.price * orderItem.quantity
+	console.log(`✓ Exercise 1: Valid price accepted - ${orderItem.name}: $${orderItem.price}, Total: $${total}`)
 	logError(1, "Negative price accepted without complaint", {
 		item: orderItem.name,
 		price: orderItem.price,
 		calculatedTotal: total,
 		issue: "Price should never be negative!",
 	})
+} catch (error) {
+        console.log(`✓ Exercise 1: Correctly rejected invalid price - ${(error as Error).message}`)
+    }
 }
