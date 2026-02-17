@@ -35,18 +35,36 @@ import { logError } from "./logger.js"
 // This is the core DDD idea: make illegal states unrepresentable.
 // ============================================================================
 
+
+type Email = string & { readonly __brand: unique symbol }
+type Phone = string & { readonly __brand: unique symbol }
+type CustomerName = string & { readonly __brand: unique symbol }
+function createEmail(s: string): Email {
+    if (!/^[^@]+@[^@]+\.[^@]+$/.test(s)) throw new Error("Invalid email")
+    return s as Email
+}
+function createPhone(s: string): Phone {
+    if (!/^\d[\d\-]{6,}$/.test(s)) throw new Error("Invalid phone")
+    return s as Phone
+}
+function createCustomerName(s: string): CustomerName {
+    if (s.trim().length === 0) throw new Error("Name cannot be empty")
+    return s.trim() as CustomerName
+}
+
 export function exercise3_StringConfusion() {
 	type Customer = {
-		name: string
-		email: string
-		phone: string
+		name: CustomerName
+		email: Email
+		phone: Phone
 	}
 
 	// TypeScript sees all strings as the same!
+	try {
 	const customer: Customer = {
-		name: "john@example.com", // Silent bug! Email in name field
-		email: "John Doe", // Silent bug! Name in email field
-		phone: "555-PIZZA", // Silent bug! Letters in phone field
+		name: createCustomerName("john@example.com"), // Silent bug! Email in name field
+		email: createEmail("John Doe"), // Silent bug! Name in email field
+		phone: createPhone("555-PIZZA"), // Silent bug! Letters in phone field
 	}
 
 	// TODO: Create separate branded types (Email, Phone, CustomerName) so
@@ -56,16 +74,38 @@ export function exercise3_StringConfusion() {
 		customer,
 		issue: "Email, phone, and name are all 'string' - no semantic distinction!",
 	})
+} catch (error) {
+        console.log(`✓ Exercise 3: Correctly rejected - ${(error as Error).message}`)
+    }
+
 
 	// Even worse - empty strings pass validation
+	try {
 	const emptyCustomer: Customer = {
-		name: "",
-		email: "",
-		phone: "",
+		name: createCustomerName(""),
+		email: createEmail(""),
+		phone: createPhone(""),
 	}
 
 	logError(3, "Empty strings accepted everywhere", {
 		customer: emptyCustomer,
 		issue: "Required fields should not be empty!",
 	})
+} catch (error) {
+        console.log(`✓ Exercise 3: Correctly rejected - ${(error as Error).message}`)
+}
+
+
+    // Test 3: Valid customer (to show it works when data is correct)
+    try {
+        const validCustomer: Customer = {
+            name: createCustomerName("John Doe"),
+            email: createEmail("john@example.com"),
+            phone: createPhone("555-123-4567"),
+        }
+        console.log(`✓ Exercise 3: Valid customer created - ${validCustomer.name}, ${validCustomer.email}`)
+    } catch (error) {
+        console.log(`✗ Exercise 3: Unexpected error - ${(error as Error).message}`)
+    }
+
 }
