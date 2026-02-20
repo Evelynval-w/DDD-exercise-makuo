@@ -1,5 +1,4 @@
 import { logError } from "./logger.js"
-
 //============================================================================
 // EXERCISE 8: The Email Validation Gap
 //
@@ -33,29 +32,42 @@ import { logError } from "./logger.js"
 //     types everywhere else.
 // ============================================================================
 
+type Email = string & { readonly __brand: unique symbol }
+
+function parseEmail(raw: string): Email {
+    const trimmed = raw.trim()
+    if (trimmed.length === 0) throw new Error("Email cannot be empty")
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed))
+        throw new Error(`Invalid email format: "${raw}"`)
+    return trimmed.toLowerCase() as Email
+}
+
+type Customer = {
+    name: string
+    email: Email
+}
+
 export function exercise8_EmailValidation() {
-	type Customer = {
-		name: string
-		email: string
-	}
+    // Test data - mix of valid and invalid emails
+    const testData = [
+        { name: "Alice", email: "alice@example.com" },
+        { name: "Bob", email: "not-an-email" },
+        { name: "Charlie", email: "charlie@@double.com" },
+        { name: "Diana", email: "@no-local-part.com" },
+        { name: "Eve", email: "eve@" },
+        { name: "Frank", email: " " },
+    ]
 
-	// TODO: Replace `string` with a branded Email type backed by parseEmail().
-	// After this change, constructing a Customer with an invalid email will
-	// throw at runtime, and the type system prevents passing raw strings
-	// where an Email is expected.
-
-	// All these pass TypeScript checking
-	const customers: Customer[] = [
-		{ name: "Alice", email: "alice@example.com" }, // Valid
-		{ name: "Bob", email: "not-an-email" }, // Silent bug!
-		{ name: "Charlie", email: "charlie@@double.com" }, // Silent bug!
-		{ name: "Diana", email: "@no-local-part.com" }, // Silent bug!
-		{ name: "Eve", email: "eve@" }, // Silent bug!
-		{ name: "Frank", email: " " }, // Silent bug! Just whitespace
-	]
-
-	logError(8, "Invalid emails accepted - no domain validation", {
-		customers,
-		issue: "Email is just a string - no validation of email format!",
-	})
+    // Parse each entry - valid ones pass, invalid ones are caught
+    for (const entry of testData) {
+        try {
+            const customer: Customer = {
+                name: entry.name,
+                email: parseEmail(entry.email),
+            }
+            console.log(`✓ Exercise 8: Valid customer - ${customer.name}: ${customer.email}`)
+        } catch (error) {
+            console.log(`✓ Exercise 8: Correctly rejected ${entry.name} - ${(error as Error).message}`)
+        }
+    }
 }
